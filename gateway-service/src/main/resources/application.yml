@@ -11,3 +11,12 @@ eureka:
 spring:
   application:
     name: gateway-service
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: user-service
+              uri: lb://USER-SERVICE
+              predicates:
+                - Path=/api/v1.0/users/**
