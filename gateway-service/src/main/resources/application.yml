@@ -15,6 +15,12 @@ spring:
     gateway:
       server:
         webflux:
+          default-filters:
+            - name: GlobalFilter
+              args:
+                baseMessage: Global Filter
+                preLogger: true
+                postLogger: true
           routes:
             - id: user-service
               uri: lb://USER-SERVICE
