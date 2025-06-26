@@ -1,5 +1,5 @@
 server:
-  port: 8000
+  port: 8080
 
 eureka:
   client:
@@ -25,6 +25,6 @@ spring:
             - id: user-service
               uri: lb://USER-SERVICE
               predicates:
-                - Path=/api/v1.0/users/**
-              filters:
-                - name : AuthorizationFilter
+                - Path=/api/v1/users/**
+#              filters:
+#                - name : AuthorizationHeaderFilter

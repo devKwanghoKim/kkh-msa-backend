@@ -16,9 +16,14 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 @Slf4j
-public class AuthorizationFilter extends AbstractGatewayFilterFactory<AuthorizationFilter.Config> {
+public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
+
+    public AuthorizationHeaderFilter() {
+        super(Config.class);
+    }
+
     @Override
-    public GatewayFilter apply(AuthorizationFilter.Config config) {
+    public GatewayFilter apply(AuthorizationHeaderFilter.Config config) {
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
