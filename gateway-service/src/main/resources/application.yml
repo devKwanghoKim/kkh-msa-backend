@@ -26,5 +26,6 @@ spring:
               uri: lb://USER-SERVICE
               predicates:
                 - Path=/api/v1/users/**
-#              filters:
+              filters:
+                - RewritePath=/api/v1/users/(?<segment>.*), /$\{segment}
 #                - name : AuthorizationHeaderFilter

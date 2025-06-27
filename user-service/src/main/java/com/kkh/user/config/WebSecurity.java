@@ -36,7 +36,7 @@ public class WebSecurity {
         http.csrf( (csrf) -> csrf.disable());
 
         http.authorizeHttpRequests((authHttpReq) -> authHttpReq
-                .requestMatchers("/api/v1/users/welcome").permitAll() // 테스트용 API 예외처리
+                .requestMatchers("/welcome").permitAll() // 테스트용 API 예외처리
                 .anyRequest().authenticated()
         ).authenticationManager(authenticationManager)
                 .sessionManagement((session) -> session
