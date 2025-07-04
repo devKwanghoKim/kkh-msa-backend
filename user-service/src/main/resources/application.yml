@@ -4,6 +4,27 @@ server:
 spring:
   application:
     name: user-service
+  #  DB ??
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://127.0.0.1:3306/ks?autoReconnect=true
+    username: root
+    password: root
+    hikari:
+      maximum-pool-size: 1
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true # System.out ??
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: my-very-secret-key-for-jwt-which-is-very-very-very-very-very-very-long-enough
+  expiration: 3600000 # 1?? (ms ??)
 
 eureka:
   instance:
