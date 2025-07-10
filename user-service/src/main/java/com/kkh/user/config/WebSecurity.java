@@ -1,6 +1,8 @@
 package com.kkh.user.config;
 
 import com.kkh.user.filter.CustomAuthenticationFilter;
+import com.kkh.user.security.CustomAccessDeniedHandler;
+import com.kkh.user.security.CustomAuthenticationEntryPoint;
 import com.kkh.user.security.CustomAuthenticationProvider;
 import com.kkh.user.security.JwtTokenProvider;
 import org.springframework.context.annotation.Bean;
@@ -21,9 +23,15 @@ public class WebSecurity {
     private final CustomAuthenticationProvider customAuthenticationProvider;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public WebSecurity(CustomAuthenticationProvider customAuthenticationProvider, JwtTokenProvider jwtTokenProvider) {
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+
+    public WebSecurity(CustomAuthenticationProvider customAuthenticationProvider, JwtTokenProvider jwtTokenProvider,
+                       CustomAuthenticationEntryPoint authenticationEntryPoint, CustomAccessDeniedHandler accessDeniedHandler) {
         this.customAuthenticationProvider = customAuthenticationProvider;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Bean
@@ -39,13 +47,18 @@ public class WebSecurity {
 
         http.authorizeHttpRequests((authHttpReq) -> authHttpReq
                         .requestMatchers("/welcome", "/auth/register", "/auth/login").permitAll()
-                        .requestMatchers("/me").access(
+                        .requestMatchers("/me", "/test/**").access(
                                 new WebExpressionAuthorizationManager(
                                         "hasIpAddress('127.0.0.1') or hasIpAddress('::1')")) // 내부망만 허용
                         .anyRequest().authenticated()
                 ).authenticationManager(authManager)
                 .sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptionHandling -> exceptionHandling //exceptionHandler 추가
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                );
+
         // 로그인 필터 추가
         http.addFilter(getAuthenticationFilter(authManager));
 
