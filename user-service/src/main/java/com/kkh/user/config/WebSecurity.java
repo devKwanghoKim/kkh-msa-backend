@@ -1,10 +1,8 @@
 package com.kkh.user.config;
 
 import com.kkh.user.filter.CustomAuthenticationFilter;
-import com.kkh.user.security.CustomAccessDeniedHandler;
-import com.kkh.user.security.CustomAuthenticationEntryPoint;
-import com.kkh.user.security.CustomAuthenticationProvider;
-import com.kkh.user.security.JwtTokenProvider;
+import com.kkh.user.security.*;
+import com.kkh.user.service.RedisTokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,16 +20,20 @@ public class WebSecurity {
 
     private final CustomAuthenticationProvider customAuthenticationProvider;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTokenService redisTokenService;
 
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final CustomAuthenticationFailureHandler authenticationFailureHandler;
 
     public WebSecurity(CustomAuthenticationProvider customAuthenticationProvider, JwtTokenProvider jwtTokenProvider,
-                       CustomAuthenticationEntryPoint authenticationEntryPoint, CustomAccessDeniedHandler accessDeniedHandler) {
+                       RedisTokenService redisTokenService, CustomAuthenticationEntryPoint authenticationEntryPoint, CustomAccessDeniedHandler accessDeniedHandler, CustomAuthenticationFailureHandler authenticationFailureHandler) {
         this.customAuthenticationProvider = customAuthenticationProvider;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.redisTokenService = redisTokenService;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
+        this.authenticationFailureHandler = authenticationFailureHandler;
     }
 
     @Bean
@@ -66,9 +68,10 @@ public class WebSecurity {
     }
 
     private CustomAuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager) {
-        CustomAuthenticationFilter filter = new CustomAuthenticationFilter(authenticationManager, jwtTokenProvider);
+        CustomAuthenticationFilter filter = new CustomAuthenticationFilter(authenticationManager, jwtTokenProvider, redisTokenService);
         // /login(기본 경로) => /auth/login path 변경
         filter.setFilterProcessesUrl("/auth/login");
+        filter.setAuthenticationFailureHandler(authenticationFailureHandler); // authenticationFailureHandler 적용
         return filter;
     }
 }

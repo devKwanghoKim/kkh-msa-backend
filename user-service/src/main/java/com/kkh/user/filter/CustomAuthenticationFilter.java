@@ -3,6 +3,7 @@ package com.kkh.user.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kkh.user.domain.dto.LoginRequestDto;
 import com.kkh.user.security.JwtTokenProvider;
+import com.kkh.user.service.RedisTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,10 +19,12 @@ import java.util.ArrayList;
 
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTokenService redisTokenService;
 
-    public CustomAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
+    public CustomAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, RedisTokenService redisTokenService) {
         super(authenticationManager);
         this.jwtTokenProvider = jwtTokenProvider;
+        this.redisTokenService = redisTokenService;
     }
 
     @Override
@@ -43,8 +46,13 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
                                             Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String token = jwtTokenProvider.generateToken(userDetails);
-        res.addHeader("token", token);
+        String accessToken = jwtTokenProvider.generateAccessToken(userDetails);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
+
+        redisTokenService.saveAccessToken(userDetails.getUsername(), accessToken);
+        redisTokenService.saveRefreshToken(userDetails.getUsername(), refreshToken);
+
+        res.addHeader("token", accessToken);
         res.addHeader("userId", userDetails.getUsername());
     }
 }
