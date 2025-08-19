@@ -9,19 +9,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
+    // user 커스텀 예외
     @ExceptionHandler(CustomUserException.class)
     public ResponseEntity<ErrorResponse> handleCustomUserException(CustomUserException ex, HttpServletRequest request) {
         BaseErrorCode code = ex.getErrorCode();
         log.warn("User 예외 발생: {}", code.getMessage());
         return buildErrorResponse(code, request.getRequestURI());
     }
-
+    // 서버 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex, HttpServletRequest request) {
         log.error("서버 내부 오류 발생", ex);
         return buildErrorResponse(CommonErrorCode.INTERNAL_SERVER_ERROR, request.getRequestURI());
     }
+
+    /* 그외 예외 추가 필요 */
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(BaseErrorCode code, String path) {
         ErrorResponse response = ErrorResponseFactory.create(code, path);

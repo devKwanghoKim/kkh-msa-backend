@@ -12,4 +12,9 @@ public class CommonController {
     public String welcome() {
         return "Welcome";
     }
+
+    @GetMapping("/welcome2")
+    public String welcome2() {
+        return "Welcome";
+    }
 }

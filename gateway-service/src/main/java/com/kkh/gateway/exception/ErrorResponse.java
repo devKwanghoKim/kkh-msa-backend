@@ -1,4 +1,4 @@
-package com.kkh.user.exception;
+package com.kkh.gateway.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

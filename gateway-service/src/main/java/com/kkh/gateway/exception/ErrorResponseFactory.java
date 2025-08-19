@@ -1,4 +1,4 @@
-package com.kkh.user.exception;
+package com.kkh.gateway.exception;
 
 public class ErrorResponseFactory {
     public static ErrorResponse create(BaseErrorCode errorCode, String path) {

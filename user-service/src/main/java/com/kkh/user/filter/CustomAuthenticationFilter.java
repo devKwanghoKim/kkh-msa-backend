@@ -2,9 +2,11 @@ package com.kkh.user.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kkh.user.domain.dto.LoginRequestDto;
+import com.kkh.user.domain.dto.UserDto;
 import com.kkh.user.security.JwtTokenProvider;
 import com.kkh.user.service.RedisTokenService;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,11 +22,14 @@ import java.util.ArrayList;
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTokenService redisTokenService;
+    private final Long refreshExpiration;
 
-    public CustomAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, RedisTokenService redisTokenService) {
+    public CustomAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider,
+                                      RedisTokenService redisTokenService, Long refreshExpiration) {
         super(authenticationManager);
         this.jwtTokenProvider = jwtTokenProvider;
         this.redisTokenService = redisTokenService;
+        this.refreshExpiration = refreshExpiration;
     }
 
     @Override
@@ -44,7 +49,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
     @Override
     protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
-                                            Authentication authentication) {
+                                            Authentication authentication) throws IOException {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String accessToken = jwtTokenProvider.generateAccessToken(userDetails);
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
@@ -54,5 +59,25 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
         res.addHeader("token", accessToken);
         res.addHeader("userId", userDetails.getUsername());
+
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        // refreshTokenCookie.setSecure(true); // TODO: 서버 환경에 따른 분기 추가 필요, https 환경이면 true, 아니면 false
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge((int) (refreshExpiration / 1000)); // 초 단위로 변환
+        // refreshTokenCookie.setAttribute("SameSite", "None"); // TODO: 서버 환경에 따른 분기 추가 필요, https 환경이면 none, 아니면 Lax
+        refreshTokenCookie.setAttribute("SameSite", "Lax");
+        res.addCookie(refreshTokenCookie);
+
+        UserDto userDto = new UserDto(
+                userDetails.getUsername(),
+                "임시",
+                userDetails.getUsername() + "@example.com"
+        );
+
+        res.setContentType("application/json");
+        res.setCharacterEncoding("UTF-8");
+        new ObjectMapper().writeValue(res.getWriter(), userDto);
     }
 }

@@ -3,6 +3,8 @@ package com.kkh.user.config;
 import com.kkh.user.filter.CustomAuthenticationFilter;
 import com.kkh.user.security.*;
 import com.kkh.user.service.RedisTokenService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,28 +15,21 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class WebSecurity {
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
 
     private final CustomAuthenticationProvider customAuthenticationProvider;
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTokenService redisTokenService;
-
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CustomAuthenticationFailureHandler authenticationFailureHandler;
-
-    public WebSecurity(CustomAuthenticationProvider customAuthenticationProvider, JwtTokenProvider jwtTokenProvider,
-                       RedisTokenService redisTokenService, CustomAuthenticationEntryPoint authenticationEntryPoint, CustomAccessDeniedHandler accessDeniedHandler, CustomAuthenticationFailureHandler authenticationFailureHandler) {
-        this.customAuthenticationProvider = customAuthenticationProvider;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.redisTokenService = redisTokenService;
-        this.authenticationEntryPoint = authenticationEntryPoint;
-        this.accessDeniedHandler = accessDeniedHandler;
-        this.authenticationFailureHandler = authenticationFailureHandler;
-    }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
@@ -49,9 +44,10 @@ public class WebSecurity {
 
         http.authorizeHttpRequests((authHttpReq) -> authHttpReq
                         .requestMatchers("/welcome", "/auth/register", "/auth/login").permitAll()
-                        .requestMatchers("/me", "/test/**").access(
+                        .requestMatchers("/**").access(
                                 new WebExpressionAuthorizationManager(
-                                        "hasIpAddress('127.0.0.1') or hasIpAddress('::1')")) // 내부망만 허용
+                                        "hasIpAddress('127.0.0.1') or hasIpAddress('::1') or " +
+                                                "hasIpAddress('192.168.0.8') or hasIpAddress('192.168.0.8/32')")) // 내부망만 허용
                         .anyRequest().authenticated()
                 ).authenticationManager(authManager)
                 .sessionManagement((session) -> session
@@ -61,6 +57,8 @@ public class WebSecurity {
                         .accessDeniedHandler(accessDeniedHandler)
                 );
 
+        http.addFilterBefore(new IpAddressLoggingFilter(), UsernamePasswordAuthenticationFilter.class);
+
         // 로그인 필터 추가
         http.addFilter(getAuthenticationFilter(authManager));
 
@@ -68,7 +66,7 @@ public class WebSecurity {
     }
 
     private CustomAuthenticationFilter getAuthenticationFilter(AuthenticationManager authenticationManager) {
-        CustomAuthenticationFilter filter = new CustomAuthenticationFilter(authenticationManager, jwtTokenProvider, redisTokenService);
+        CustomAuthenticationFilter filter = new CustomAuthenticationFilter(authenticationManager, jwtTokenProvider, redisTokenService, refreshExpiration);
         // /login(기본 경로) => /auth/login path 변경
         filter.setFilterProcessesUrl("/auth/login");
         filter.setAuthenticationFailureHandler(authenticationFailureHandler); // authenticationFailureHandler 적용
