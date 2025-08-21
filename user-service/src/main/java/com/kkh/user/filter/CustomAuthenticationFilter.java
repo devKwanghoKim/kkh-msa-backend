@@ -3,6 +3,7 @@ package com.kkh.user.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kkh.user.domain.dto.LoginRequestDto;
 import com.kkh.user.domain.dto.UserDto;
+import com.kkh.user.security.CustomUserDetails;
 import com.kkh.user.security.JwtTokenProvider;
 import com.kkh.user.service.RedisTokenService;
 import jakarta.servlet.FilterChain;
@@ -13,7 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
+// import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     @Override
     protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
                                             Authentication authentication) throws IOException {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String accessToken = jwtTokenProvider.generateAccessToken(userDetails);
         String refreshToken = jwtTokenProvider.generateRefreshToken(userDetails);
 
@@ -72,8 +73,9 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
         UserDto userDto = new UserDto(
                 userDetails.getUsername(),
-                "임시",
-                userDetails.getUsername() + "@example.com"
+                userDetails.getUserNickname(),
+                userDetails.getUserEmail(),
+                userDetails.getUserPhoneNumber()
         );
 
         res.setContentType("application/json");

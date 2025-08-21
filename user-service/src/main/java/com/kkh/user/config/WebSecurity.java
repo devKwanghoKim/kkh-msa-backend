@@ -47,7 +47,7 @@ public class WebSecurity {
                         .requestMatchers("/**").access(
                                 new WebExpressionAuthorizationManager(
                                         "hasIpAddress('127.0.0.1') or hasIpAddress('::1') or " +
-                                                "hasIpAddress('192.168.0.8') or hasIpAddress('192.168.0.8/32')")) // 내부망만 허용
+                                                "hasIpAddress('192.168.0.8') or hasIpAddress('192.168.0.0/24')")) // 내부망만 허용
                         .anyRequest().authenticated()
                 ).authenticationManager(authManager)
                 .sessionManagement((session) -> session

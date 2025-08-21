@@ -19,6 +19,9 @@ public class AuthService {
         User user = User.builder()
                 .username(userRegistrationDto.getUsername())
                 .password(encodedPassword)
+                .nickname(userRegistrationDto.getNickname())
+                .email(userRegistrationDto.getEmail())
+                .phoneNumber(userRegistrationDto.getPhoneNumber())
                 .role(Role.ROLE_USER)
                 .build();
         userRepository.save(user);

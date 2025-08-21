@@ -41,6 +41,18 @@ public class CustomUserDetails implements UserDetails {
         return user.getUsername();
     }
 
+    public String getUserNickname() {
+        return user.getNickname();
+    }
+
+    public String getUserPhoneNumber() {
+        return user.getPhoneNumber();
+    }
+
+    public String getUserEmail() {
+        return user.getEmail();
+    }
+
     /**
      * 계정이 만료되지 않았는지를 나타냅니다.
      * true이면 계정이 유효함을 의미합니다.

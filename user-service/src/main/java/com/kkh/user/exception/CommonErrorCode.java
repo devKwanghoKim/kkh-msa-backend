@@ -11,7 +11,8 @@ public enum CommonErrorCode implements BaseErrorCode {
     INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "INVALID_PASSWORD", "아이디 또는 비밀번호가 일치하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "USER_NOT_FOUND", "아이디 또는 비밀번호가 일치하지 않습니다."),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 요청입니다."),
-    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "유효성 검사 실패");
+    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "유효성 검사 실패"),
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "INVALID_INPUT", "필수값이 누락되었습니다.");
 
     private final HttpStatus status;
     private final String code;

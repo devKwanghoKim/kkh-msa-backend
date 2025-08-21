@@ -5,7 +5,7 @@ import com.kkh.gateway.exception.BaseErrorCode;
 import com.kkh.gateway.exception.CommonErrorCode;
 import com.kkh.gateway.exception.ErrorResponse;
 import com.kkh.gateway.exception.ErrorResponseFactory;
-import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -50,11 +50,22 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
             String authorizationHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
             String jwt = authorizationHeader.replace("Bearer ", "");
 
-            if (!isJwtValid(jwt)) {
+            Claims claims;
+            try {
+                claims = parseJwt(jwt);
+            } catch (Exception e) {
                 return onError(exchange, CommonErrorCode.INVALID_TOKEN);
             }
 
-            return chain.filter(exchange);
+            if(claims.getSubject() == null || claims.getSubject().isEmpty()){
+                return onError(exchange, CommonErrorCode.INVALID_TOKEN);
+            }
+
+            ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                    .header("X-User-Id", claims.getSubject())
+                    .build();
+
+            return chain.filter(exchange.mutate().request(modifiedRequest).build());
         });
     }
 
@@ -78,25 +89,13 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         return response.writeWith(Flux.just(buffer));
     }
 
-    private boolean isJwtValid(String jwt) {
+    private Claims parseJwt(String jwt) {
         SecretKey signingKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-
-        boolean returnValue = true;
-        String subject = null;
-
-        try {
-            JwtParser jwtParser = Jwts.parserBuilder()
-                    .setSigningKey(signingKey)
-                    .build();
-            subject = jwtParser.parseClaimsJws(jwt).getBody().getSubject();
-        } catch (Exception ex) {
-            returnValue = false;
-        }
-
-        if (subject == null || subject.isEmpty()) {
-            returnValue = false;
-        }
-        return returnValue;
+        return Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
+                .parseClaimsJws(jwt)
+                .getBody();
     }
 
     public static class Config {
